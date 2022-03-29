@@ -1,11 +1,12 @@
 import torch
 import torchvision
 from torch.optim.lr_scheduler import MultiStepLR, LinearLR
+from SSD.ssd.data.transforms.transform import RandomSampleCrop
 from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
 from tops.config import LazyCall as L
 from ssd.data import TDT4265Dataset
 from ssd import utils
-from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize
+from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize, RandomHorizontalFlip
 from .utils import get_dataset_dir, get_output_dir
 
 
@@ -75,7 +76,9 @@ data_train = dict(
     ),
     # GPU transforms can heavily speedup data augmentations.
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
-        L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
+        L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
+        L(RandomHorizontalFlip)(),
+        L(RandomSampleCrop)(),
     ])
 )
 data_val = dict(
