@@ -1,4 +1,3 @@
-from typing_extensions import Self
 import torch
 from torch import nn
 from typing import Tuple, List
