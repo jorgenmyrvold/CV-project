@@ -6,6 +6,7 @@ from ssd.data.transforms import (
 from .task2_1 import (
     train,
     optimizer,
+    anchors,
     schedulers,
     loss_objective,
     model,
