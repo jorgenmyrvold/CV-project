@@ -1,12 +1,11 @@
 import torch
 import torchvision
 from torch.optim.lr_scheduler import MultiStepLR, LinearLR
-from SSD.ssd.data.transforms.transform import RandomSampleCrop
 from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
 from tops.config import LazyCall as L
 from ssd.data import TDT4265Dataset
 from ssd import utils
-from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize, RandomHorizontalFlip
+from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize, RandomHorizontalFlip, RandomSampleCrop
 from .utils import get_dataset_dir, get_output_dir
 
 
@@ -65,9 +64,11 @@ data_train = dict(
     dataset=L(TDT4265Dataset)(
     img_folder=get_dataset_dir("tdt4265_2022"),
     transform=L(torchvision.transforms.Compose)(transforms=[
+        L(RandomSampleCrop)(),
         L(ToTensor)(),
         L(Resize)(imshape="${train.imshape}"),
         L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
+        L(RandomHorizontalFlip)(),
     ]),
     annotation_file=get_dataset_dir("tdt4265_2022/train_annotations.json")),
     dataloader=L(torch.utils.data.DataLoader)(
@@ -77,8 +78,6 @@ data_train = dict(
     # GPU transforms can heavily speedup data augmentations.
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
         L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
-        L(RandomHorizontalFlip)(),
-        L(RandomSampleCrop)(),
     ])
 )
 data_val = dict(
