@@ -1,0 +1,193 @@
+from tops.config import instantiate, LazyConfig
+from ssd import utils
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import numpy as np
+np.set_printoptions(precision=4, suppress=True)
+
+
+def get_config(config_path):
+    cfg = LazyConfig.load(config_path)
+    cfg.train.batch_size = 1
+    return cfg
+
+
+def get_dataloader(cfg, dataset_to_visualize):
+    if dataset_to_visualize == "train":
+        # Remove GroundTruthBoxesToAnchors transform
+        cfg.data_train.dataset.transform.transforms = cfg.data_train.dataset.transform.transforms[:-1]
+        data_loader = instantiate(cfg.data_train.dataloader)
+    else:
+        cfg.data_val.dataloader.collate_fn = utils.batch_collate
+        data_loader = instantiate(cfg.data_val.dataloader)
+
+    return data_loader
+
+def print_dict(d):
+    for key, val in d.items():
+        print(f"{key} \t {val}")
+
+def get_text_labels(int_labels):
+    dataset_labels =  {0: 'background', 1: 'car', 2: 'truck', 3: 'bus', 4: 'motorcycle', 5: 'bicycle', 6: 'scooter', 7: 'person', 8: 'rider'}
+    text_labels = []
+    for i in int_labels:
+        text_labels.append(dataset_labels[i])
+    return text_labels
+
+def plot_num_labels(num_labels:dict):
+    fig, ax = plt.subplots()
+    int_labels_in_dataset = np.array(list(num_labels.keys())).astype(int)
+    labels = get_text_labels(int_labels_in_dataset)
+    ax.pie(num_labels.values(), labels=labels, autopct='%1.1f%%', shadow=True)
+    ax.axis('equal')
+    plt.show()
+
+def setBoxColors(bp):
+    # Utility function from https://stackoverflow.com/questions/16592222/matplotlib-group-boxplots
+    plt.setp(bp['boxes'][0], color='C0')
+    plt.setp(bp['caps'][0], color='C0')
+    plt.setp(bp['caps'][1], color='C0')
+    plt.setp(bp['whiskers'][0], color='C0')
+    plt.setp(bp['whiskers'][1], color='C0')
+    plt.setp(bp['fliers'][0], markeredgecolor='C0', marker='x')
+    plt.setp(bp['medians'][0], color='C0')
+
+    plt.setp(bp['boxes'][1], color='C1')
+    plt.setp(bp['caps'][2], color='C1')
+    plt.setp(bp['caps'][3], color='C1')
+    plt.setp(bp['whiskers'][2], color='C1')
+    plt.setp(bp['whiskers'][3], color='C1')
+    plt.setp(bp['fliers'][1], markeredgecolor='C1', marker='x')
+    plt.setp(bp['medians'][1], color='C1')
+
+def plot_bb_sizes(bb_sizes):
+    # bb_sizes = {1:[(w1, h1), (w2 ,h2), ...], 2:...}
+    # Want sizes = {1:[(w1, w2, ...), (h1, h2, ...)], 2:...}
+    int_labels_in_dataset = np.array(list(bb_sizes.keys())).astype(int)
+    text_labels = get_text_labels(int_labels_in_dataset)
+    sizes = {}
+
+    for key, size in bb_sizes.items():
+        sizes[key] = list(zip(*size))
+
+    fig, ax = plt.subplots()
+
+    bp = plt.boxplot(sizes[1], positions = [1, 2], widths = 0.6)
+    setBoxColors(bp)
+    bp = plt.boxplot(sizes[2], positions = [4, 5], widths = 0.6)
+    setBoxColors(bp)
+    bp = plt.boxplot(sizes[3], positions = [7, 8], widths = 0.6)
+    setBoxColors(bp)
+    # plt.boxplot(sizes[4], positions = [10, 11], widths = 0.6)
+    bp = plt.boxplot(sizes[5], positions = [10, 11], widths = 0.6)
+    setBoxColors(bp)
+    bp = plt.boxplot(sizes[6], positions = [13, 14], widths = 0.6)
+    setBoxColors(bp)
+    bp = plt.boxplot(sizes[7], positions = [16, 17], widths = 0.6)
+    setBoxColors(bp)
+    bp = plt.boxplot(sizes[8], positions = [19, 20], widths = 0.6)
+    setBoxColors(bp)
+    # plt.boxplot(sizes[8], positions = [22, 23], widths = 0.6)
+
+    plt.axhline(y=128, linestyle='dashed', color='C2')
+
+    hB, = plt.plot([1,1],'C0')
+    hR, = plt.plot([1,1],'C1')
+    plt.legend((hB, hR),('Width', 'Height'))
+    hB.set_visible(False)
+    hR.set_visible(False)
+
+    text_labels.pop(3)
+    ax.set_xticklabels(text_labels)
+    ax.set_xticks([1.5, 4.5, 7.5, 10.5, 13.5, 16.5, 19.5])
+    ax.set_ylim(bottom=0)
+    plt.show()
+
+def analyze_something(dataloader, cfg):
+    img_width = 1024
+    img_height = 128
+
+    # Number of lables in the entire dataset
+    all_labels = np.array([])
+    # Dict containing tuples (w,h) for each bounding box in the corresponding label 
+    bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
+    pixel_bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
+    avg_bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
+    pixel_avg_bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
+    # Largest bounding boxes
+    largest_bb = {'widest':0, 'widest_label':0, 'highest':0, 'highest_label':0}
+
+
+    for batch in tqdm(dataloader):
+
+        labels = batch["labels"].numpy()
+        labels = labels.reshape(labels.shape[1:])
+        boxes = batch["boxes"].numpy()
+        boxes = boxes.reshape(boxes.shape[1:])
+        
+        all_labels = np.append(all_labels, batch["labels"])
+
+        for label, bb in zip(labels, boxes):
+            height = bb[3] - bb[1]
+            width = bb[2] - bb[0]
+            pixel_height = height * img_height
+            pixel_width = width * img_width
+            bb_sizes[label].append((width, height))
+            pixel_bb_sizes[label].append((pixel_width, pixel_height))
+            
+            if pixel_height > largest_bb["highest"]:
+                largest_bb["highest"] = pixel_height
+                largest_bb["highest_label"] = label
+            if pixel_width > largest_bb["widest"]:
+                largest_bb["widest"] = pixel_width
+                largest_bb["widest_label"] = label
+
+    unique, counts = np.unique(all_labels, return_counts=True)
+    # dict containing number of lables for each lable
+    num_labels = dict(zip(unique, counts))
+
+    for key in avg_bb_sizes: 
+        sizes = np.array(bb_sizes[key])
+        avg_bb_sizes[key] = np.mean(sizes, axis=0)
+
+        pixel_size = np.array(pixel_bb_sizes[key])
+        pixel_avg_bb_sizes[key] = np.mean(pixel_size, axis=0)
+
+        try:
+            ratio = avg_bb_sizes[key][1] / avg_bb_sizes[key][0]
+            pixel_ratio = pixel_avg_bb_sizes[key][1] / pixel_avg_bb_sizes[key][0]
+        except IndexError:
+            ratio = [np.nan, np.nan]
+            pixel_ratio = [np.nan, np.nan]
+
+        avg_bb_sizes[key] = np.append(avg_bb_sizes[key], ratio)
+        pixel_avg_bb_sizes[key] = np.append(pixel_avg_bb_sizes[key], pixel_ratio)
+
+    print("\nNUMBER OF LABLES")
+    print_dict(num_labels)
+    print("\nAVERAGE BOUNDING BOX SIZE (w, h, ratio)")
+    print_dict(avg_bb_sizes)
+    print("\nPIXEL AVERAGE BOUNDING BOX SIZE (w, h, ratio)")
+    print_dict(pixel_avg_bb_sizes)
+    print(f'\nWIDEST BB: {largest_bb["widest"]:.2f}\t label {largest_bb["widest_label"]}')
+    print(f'HIGHEST BB: {largest_bb["highest"]:.2f}\t label {largest_bb["highest_label"]}')
+
+    # plot_num_labels(num_labels)
+    plot_bb_sizes(pixel_bb_sizes)
+    exit()
+    
+
+
+def main():
+    config_path = "configs/tdt4265.py"
+    cfg = get_config(config_path)
+    dataset_to_analyze = "train"  # or "val"
+
+    print("Label map is:", cfg.label_map)
+
+    dataloader = get_dataloader(cfg, dataset_to_analyze)
+    analyze_something(dataloader, cfg)
+
+
+if __name__ == '__main__':
+    main()
