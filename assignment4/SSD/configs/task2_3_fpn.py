@@ -1,6 +1,7 @@
 
 from tops.config import LazyCall as L
 import torchvision
+import torch
 from ssd.modeling import SSD300
 from ssd.modeling.backbones import FPN
 from .task2_2_hFlip_Crop import (
@@ -31,7 +32,7 @@ model = L(SSD300)(
     anchors="${anchors}",
     loss_objective="${loss_objective}",
     num_classes=8 + 1  # Add 1 for background
-)
+)   
 '''
 
 import torch
