@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 from typing import Tuple, List
+from collections import OrderedDict
+import torchvision
 import torchvision.models as tvm
 
 
@@ -22,8 +24,8 @@ class FPN(torch.nn.Module):
         super().__init__()
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
-        
-        model = tvm.resnet34(pretrained=True)
+        self.fpn = torchvision.ops.FeaturePyramidNetwork(self.out_channels, 64)
+        model = tvm.resnet50(pretrained=True)
         modules = list(model.children())[:-2]
         backbone = nn.Sequential(*modules)
 
@@ -35,8 +37,6 @@ class FPN(torch.nn.Module):
         self.conv2 = backbone[5]
         self.conv3 = backbone[6]
         self.conv4 = backbone[7]
-
-        #self.feature_extractor = backbone
         
         self.conv5 = nn.Sequential(
             nn.ReLU(),
@@ -72,8 +72,6 @@ class FPN(torch.nn.Module):
                 stride=2),  # This was 1, changed to make the model run, not sure if correct
             nn.ReLU(),
         )
-
-        #self.feature_extractor = backbone
         self.feature_extractor = [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6]
         
 
@@ -92,27 +90,41 @@ class FPN(torch.nn.Module):
         """
         
         out_features = []
-
+        #out_features = nn.ModuleList
+        out_features_keys = ["c1","c2","c3","c4","c5","c6"]
+        
+        #fpn = torchvision.ops.FeaturePyramidNetwork(self.out_channels, 64)
+        
         #First layers of ResNet34 
         x = self.conv(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.conv1(x)
-        x = self.maxpool(x)
-        out_features.append(x)
-        x = self.conv2(x)
-        out_features.append(x)
-        x = self.conv3(x)
-        out_features.append(x)
-        x = self.conv4(x)
-        out_features.append(x)
-        x = self.conv5(x)
-        out_features.append(x)
-        x = self.conv6
-        out_features.append(x)
-        
+        c1 = self.conv1(x)
+        out_features.append(c1)
+        #print("c1: ", c1.shape)
+        c2 = self.conv2(c1)
+        out_features.append(c2)
+        #print("c2: ", c2.shape)
+        c3 = self.conv3(c2)
+        out_features.append(c3)
+        #print("c3: ", c3.shape)
+        c4 = self.conv4(c3)
+        out_features.append(c4)
+        #print("c4: ", c4.shape)
+        c5 = self.conv5(c4)
+        out_features.append(c5)
+        #print("c5: ", c5.shape)
+        c6 = self.conv6(c5)
+        out_features.append(c6)
+        #print("c6: ", c6.shape)
+
+        output_dict = dict(zip(out_features_keys, out_features))
+        #print(output_dict)
+        #output_dict= {out_features_keys[i]: out_features[i] for i in range(len(out_features_keys))}
+        output_fpn = self.fpn(output_dict)
+
         '''
         for layer in self.feature_extractor:
             out_features.append(layer(x))
@@ -121,7 +133,8 @@ class FPN(torch.nn.Module):
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
-            expected_shape = (out_channel, h, w)
+            expected_shape = (self.out_channels[idx], h, w)
+            #expected_shape = (out_channel, h, w)
             assert feature.shape[1:] == expected_shape, \
                 f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
         assert len(out_features) == len(self.output_feature_shape),\
