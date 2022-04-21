@@ -62,7 +62,7 @@ class FocalLoss(nn.Module):
         self.anchors = nn.Parameter(anchors(order="xywh").transpose(0, 1).unsqueeze(dim = 0),
             requires_grad=False)
         self.gamma = gamma
-        self.alpha = alpha
+        self.alpha = torch.FloatTensor(alpha).cuda()
         self.num_classes = num_classes
         print("gamma: ", len(alpha))
 
@@ -95,28 +95,31 @@ class FocalLoss(nn.Module):
         #to here
         
         # One-hot-encoding of gt_labels
-        cuda0 = torch.device('cuda:0')  # CUDA GPU 0
+        
         one_hot_target = F.one_hot(gt_labels, self.num_classes)
         one_hot_target = torch.transpose(one_hot_target, 1, 2)
         #one_hot_target = one_hot_encode(gt_labels, len(self.alpha))
+        #cuda0 = torch.device('cuda:0')  # CUDA GPU 0
         #one_hot_target = one_hot_target.to(cuda0)
         
         # Apply softmax to confs
+        #print("confs: ",confs.shape)
         log_p_k = F.log_softmax(confs, dim=1)
-        log_p_k = torch.transpose(log_p_k, 1, 2)
+        #log_p_k = torch.transpose(log_p_k, 1, 2)
         p_k = F.softmax(confs,dim=1)
         #calculate focal loss
         weight = torch.pow(1.0 - p_k, self.gamma)
-        print("weight: ",weight.shape)
-        print("log pk: ", log_p_k.shape)
-        print("one hot target: ", one_hot_target.shape)
-        print("one hot target Trans: ", one_hot_target.shape)
-        print("alpha: ", self.alpha)
-        #focal = torch.matmul(one_hot_target, log_p_k)
-        focal = torch.matmul(weight, log_p_k)
-        print("focal : ", focal.shape)
-        focal_loss = torch.nn.NLLLoss(focal, one_hot_target)
-        #torch.einsum((one_hot_target, focal))
+        #print("weight: ",weight.shape)
+        #print("log pk: ", log_p_k.shape)
+        #print("one hot target: ", one_hot_target.shape)
+        #print("alpha: ", self.alpha.shape)
+        focal = weight * one_hot_target * log_p_k
+        alphas = self.alpha.repeat(confs.shape[2], 1).T
+        focal = -alphas.repeat(confs.shape[0],1,1) * focal
+        #print("focal : ", focal.shape)
+        #focal_loss = torch.nn.NLLLoss(focal, one_hot_target)
+        focal_loss=torch.sum(focal)
+        #print("focal loss: ", focal_loss.shape)
         
         #classification_loss = F.cross_entropy(confs, gt_labels, reduction="none")
         #classification_loss = classification_loss[mask].sum() #dont need this. matrix multiplication instead?
