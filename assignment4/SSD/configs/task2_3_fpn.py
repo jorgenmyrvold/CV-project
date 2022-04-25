@@ -1,4 +1,40 @@
-<<<<<<< HEAD
+
+from tops.config import LazyCall as L
+import torchvision
+import torch
+from ssd.modeling import SSD300
+from ssd.modeling.backbones import FPN
+from .task2_2_hFlip_Crop import (
+    train,
+    optimizer,
+    anchors,
+    schedulers,
+    loss_objective,
+    #model,
+    #backbone,
+    data_train,
+    data_val,
+    anchors,
+    train_cpu_transform,
+    val_cpu_transform,
+    gpu_transform,
+    label_map
+)
+
+backbone = L(FPN)(
+    output_channels=[256, 512, 1024, 2048, 256, 64],
+    #output_channels=[128, 256, 128, 512, 64, 64],
+    image_channels="${train.image_channels}",
+    output_feature_sizes="${anchors.feature_sizes}")
+
+model = L(SSD300)(
+    feature_extractor="${backbone}",
+    anchors="${anchors}",
+    loss_objective="${loss_objective}",
+    num_classes=8 + 1  # Add 1 for background
+)   
+'''
+
 import torch
 import torchvision
 from torch.optim.lr_scheduler import MultiStepLR, LinearLR
@@ -6,7 +42,7 @@ from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
 from tops.config import LazyCall as L
 from ssd.data import TDT4265Dataset
 from ssd import utils
-from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize, RandomHorizontalFlip, RandomSampleCrop
+from ssd.data.transforms import Normalize, ToTensor, GroundTruthBoxesToAnchors, Resize
 from .utils import get_dataset_dir, get_output_dir
 
 
@@ -36,7 +72,7 @@ anchors = L(AnchorBoxes)(
     scale_size_variance=0.2
 )
 
-backbone = L(backbones.BasicModel)(
+backbone = L(backbones.FPN)(
     output_channels=[128, 256, 128, 128, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
@@ -65,11 +101,9 @@ data_train = dict(
     dataset=L(TDT4265Dataset)(
     img_folder=get_dataset_dir("tdt4265_2022"),
     transform=L(torchvision.transforms.Compose)(transforms=[
-        L(RandomSampleCrop)(),
         L(ToTensor)(),
         L(Resize)(imshape="${train.imshape}"),
         L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
-        L(RandomHorizontalFlip)(),
     ]),
     annotation_file=get_dataset_dir("tdt4265_2022/train_annotations.json")),
     dataloader=L(torch.utils.data.DataLoader)(
@@ -78,7 +112,7 @@ data_train = dict(
     ),
     # GPU transforms can heavily speedup data augmentations.
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
-        L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
+        L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
     ])
 )
 data_val = dict(
@@ -100,39 +134,4 @@ data_val = dict(
 
 label_map = {idx: cls_name for idx, cls_name in enumerate(TDT4265Dataset.class_names)}
 
-=======
-from tops.config import LazyCall as L
-import torchvision
-from ssd.data.transforms import (ToTensor, Normalize, Resize,GroundTruthBoxesToAnchors, RandomHorizontalFlip, RandomSampleCrop)
-from .task2_1 import (
-    train,
-    optimizer,
-    anchors,
-    schedulers,
-    loss_objective,
-    model,
-    backbone,
-    data_train,
-    data_val,
-    anchors,
-    # train_cpu_transform,
-    # val_cpu_transform,
-    # gpu_transform,
-    label_map
-)
-
-train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
-    L(RandomSampleCrop)(),
-    L(ToTensor)(),
-    L(Resize)(imshape="${train.imshape}"),
-    L(RandomHorizontalFlip)(),
-    L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
-])
-val_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
-    L(ToTensor)(),
-    L(Resize)(imshape="${train.imshape}"),
-])
-gpu_transform = L(torchvision.transforms.Compose)(transforms=[
-    L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878]),
-])
->>>>>>> projectBranchIvar
+'''
