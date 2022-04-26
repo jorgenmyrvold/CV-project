@@ -18,13 +18,15 @@ class FPN(torch.nn.Module):
      shape(-1, output_channels[4], 1, 1)]
     """
     def __init__(self,
+            input_channels: List[int],
             output_channels: List[int],
             image_channels: int,
             output_feature_sizes: List[Tuple[int]]):
         super().__init__()
+        self.in_channels = input_channels
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
-        self.fpn = torchvision.ops.FeaturePyramidNetwork(self.out_channels, 256)
+        self.fpn = torchvision.ops.FeaturePyramidNetwork([256, 512, 1024, 2048, 256, 64], 256)
         model = tvm.resnet50(pretrained=True)
         modules = list(model.children())[:-2]
         backbone = nn.Sequential(*modules)
@@ -41,7 +43,7 @@ class FPN(torch.nn.Module):
         self.conv5 = nn.Sequential(
             nn.ReLU(),
             nn.Conv2d(
-                in_channels=output_channels[3],
+                in_channels=input_channels[3],
                 out_channels=256,
                 kernel_size=3,
                 padding=1,
@@ -49,7 +51,7 @@ class FPN(torch.nn.Module):
             nn.ReLU(),
             nn.Conv2d(
                 in_channels=256,
-                out_channels=output_channels[4],
+                out_channels=input_channels[4],
                 kernel_size=3,
                 padding=1,
                 stride=2),
@@ -58,7 +60,7 @@ class FPN(torch.nn.Module):
         self.conv6 = nn.Sequential(
             nn.ReLU(),
             nn.Conv2d(
-                in_channels=output_channels[4],
+                in_channels=input_channels[4],
                 out_channels=128,
                 kernel_size=2,
                 padding=1,
@@ -66,7 +68,7 @@ class FPN(torch.nn.Module):
             nn.ReLU(),
             nn.Conv2d(
                 in_channels=128,
-                out_channels=output_channels[5],
+                out_channels=input_channels[5],
                 kernel_size=2,
                 padding=0,
                 stride=2),  # This was 1, changed to make the model run, not sure if correct
@@ -119,11 +121,12 @@ class FPN(torch.nn.Module):
         c6 = self.conv6(c5)
         out_features.append(c6)
         #print("c6: ", c6.shape)
-
         output_dict = dict(zip(out_features_keys, out_features))
         #print(output_dict)
         #output_dict= {out_features_keys[i]: out_features[i] for i in range(len(out_features_keys))}
         output_fpn = self.fpn(output_dict)
+        out_features = output_fpn.values()
+        #print(output_fpn)
 
         '''
         for layer in self.feature_extractor:

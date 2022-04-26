@@ -23,7 +23,9 @@ class RetinaNet(nn.Module):
         self.regression_heads = []
         self.classification_heads = []
 
-        self.dpr_conv_layer = nn.Sequential(
+        n_boxes = 6
+
+        self.regression_head = nn.Sequential(
             nn.Conv2d(
                 in_channels=256,
                 out_channels=256,
@@ -52,39 +54,85 @@ class RetinaNet(nn.Module):
                 padding=1,
                 stride=1),
             nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=n_boxes*4,
+                kernel_size=3,
+                padding=1,
+                stride=1),
         )
 
-        # Initialize output heads that are applied to each feature map from the backbone.
-        for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
-            self.regression_heads.append(self.dpr_conv_layer)
-            self.classification_heads.append(self.dpr_conv_layer)
-            self.regression_heads.append(nn.Conv2d(256, n_boxes * 4, kernel_size=3, padding=1))
-            self.classification_heads.append(nn.Conv2d(256, n_boxes * self.num_classes, kernel_size=3, padding=1))
+        self.classification_head = nn.Sequential(
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding=1,
+                stride=1),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding=1,
+                stride=1),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding=1,
+                stride=1),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=256,
+                kernel_size=3,
+                padding=1,
+                stride=1),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels=256,
+                out_channels=n_boxes*self.num_classes,
+                kernel_size=3,
+                padding=1,
+                stride=1),
+        )
+        
 
+        # Initialize output heads that are applied to each feature map from the backbone.
+        
+        for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
+            print("outch: ", out_ch)
+            print("nboxes: ", n_boxes)
+            #self.regression_heads.append(conv_regression_heads)
+            #self.classification_heads.append(conv_class_heads)
+            #self.regression_heads.append(nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1))
+            #self.classification_heads.append(nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1))
+        
         self.regression_heads = nn.ModuleList(self.regression_heads)
-        #print("reg hd: ",len(self.regression_heads.size))
         self.classification_heads = nn.ModuleList(self.classification_heads)
         self.anchor_encoder = AnchorEncoder(anchors)
         self._init_weights()
-
+    
     def _init_weights(self):
         layers = [*self.regression_heads, *self.classification_heads]
         for layer in layers:
             for param in layer.parameters():
                 if param.dim() > 1: nn.init.xavier_uniform_(param)
-
+   
     def regress_boxes(self, features):
         locations = []
         confidences = []
         for idx, x in enumerate(features):
-            bbox_delta = self.regression_heads[idx](x).view(x.shape[0], 4, -1)
-            bbox_conf = self.classification_heads[idx](x).view(x.shape[0], self.num_classes, -1)
+            bbox_delta = self.regression_head(x).view(x.shape[0], 4, -1)
+            bbox_conf = self.classification_head(x).view(x.shape[0], self.num_classes, -1)
             locations.append(bbox_delta)
             confidences.append(bbox_conf)
         bbox_delta = torch.cat(locations, 2).contiguous()
         confidences = torch.cat(confidences, 2).contiguous()
         return bbox_delta, confidences
-
+    
     
     def forward(self, img: torch.Tensor, **kwargs):
         """

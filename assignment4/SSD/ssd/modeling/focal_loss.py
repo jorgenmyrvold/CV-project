@@ -37,7 +37,6 @@ class FocalLoss(nn.Module):
         self.gamma = gamma
         self.alpha = torch.FloatTensor(alpha).cuda()
         self.num_classes = num_classes
-        print("gamma: ", len(alpha))
 
 
     def _loc_vec(self, loc):
@@ -51,6 +50,8 @@ class FocalLoss(nn.Module):
     def forward(self,
             bbox_delta: torch.FloatTensor, confs: torch.FloatTensor,
             gt_bbox: torch.FloatTensor, gt_labels: torch.LongTensor): # gt_labels = y
+        #print("confs: ", confs.shape)
+        #print("bbox_delta", bbox_delta.shape)
         """
         NA is the number of anchor boxes (by default this is 8732)
             bbox_delta: [batch_size, 4, num_anchors]
