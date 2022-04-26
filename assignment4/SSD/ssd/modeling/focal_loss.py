@@ -4,33 +4,6 @@ import math
 import numpy as np
 import torch.nn.functional as F
 
-#CUT FROM HERE
-'''
-def hard_negative_mining(loss, labels, neg_pos_ratio):
-    """
-    It used to suppress the presence of a large number of negative prediction.
-    It works on image level not batch level.
-    For any example/image, it keeps all the positive predictions and
-     cut the number of negative predictions to make sure the ratio
-     between the negative examples and positive examples is no more
-     the given ratio for an image.
-    Args:
-        loss (N, num_priors): the loss for each example.
-        labels (N, num_priors): the labels.
-        neg_pos_ratio:  the ratio between the negative examples and positive examples.
-    """
-    pos_mask = labels > 0
-    num_pos = pos_mask.long().sum(dim=1, keepdim=True)
-    num_neg = num_pos * neg_pos_ratio
-
-    loss[pos_mask] = -math.inf
-    _, indexes = loss.sort(dim=1, descending=True)
-    _, orders = indexes.sort(dim=1)
-    neg_mask = orders < num_neg
-    return pos_mask | neg_mask
-'''
-#TO HERE
-
 def one_hot_encode(Y: np.ndarray, num_classes: int)->torch.Tensor:
     """
     Args:
@@ -86,43 +59,24 @@ class FocalLoss(nn.Module):
             gt_label = [batch_size, num_anchors]
         """
         gt_bbox = gt_bbox.transpose(1, 2).contiguous() # reshape to [batch_size, 4, num_anchors]
-        #cut from here
-        '''
-        with torch.no_grad():
-            to_log = - F.log_softmax(confs, dim=1)[:, 0]
-            mask = hard_negative_mining(to_log, gt_labels, 3.0)
-        '''
-        #to here
         
         # One-hot-encoding of gt_labels
         
         one_hot_target = F.one_hot(gt_labels, self.num_classes)
         one_hot_target = torch.transpose(one_hot_target, 1, 2)
-        #one_hot_target = one_hot_encode(gt_labels, len(self.alpha))
-        #cuda0 = torch.device('cuda:0')  # CUDA GPU 0
-        #one_hot_target = one_hot_target.to(cuda0)
         
         # Apply softmax to confs
-        #print("confs: ",confs.shape)
         log_p_k = F.log_softmax(confs, dim=1)
-        #log_p_k = torch.transpose(log_p_k, 1, 2)
+        
         p_k = F.softmax(confs,dim=1)
         #calculate focal loss
         weight = torch.pow(1.0 - p_k, self.gamma)
-        #print("weight: ",weight.shape)
-        #print("log pk: ", log_p_k.shape)
-        #print("one hot target: ", one_hot_target.shape)
-        #print("alpha: ", self.alpha.shape)
+        
         focal = weight * one_hot_target * log_p_k
         alphas = self.alpha.repeat(confs.shape[2], 1).T
         focal = -alphas.repeat(confs.shape[0],1,1) * focal
-        #print("focal : ", focal.shape)
-        #focal_loss = torch.nn.NLLLoss(focal, one_hot_target)
+       
         focal_loss=torch.sum(focal)
-        #print("focal loss: ", focal_loss.shape)
-        
-        #classification_loss = F.cross_entropy(confs, gt_labels, reduction="none")
-        #classification_loss = classification_loss[mask].sum() #dont need this. matrix multiplication instead?
 
         pos_mask = (gt_labels > 0).unsqueeze(1).repeat(1, 4, 1)
         bbox_delta = bbox_delta[pos_mask]
