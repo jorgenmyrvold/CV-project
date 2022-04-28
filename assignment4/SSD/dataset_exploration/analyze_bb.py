@@ -116,6 +116,9 @@ def analyze_something(dataloader, cfg):
     pixel_avg_bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
     # Largest bounding boxes
     largest_bb = {'widest':0, 'widest_label':0, 'highest':0, 'highest_label':0}
+    # Largest and smalles bb ratio
+    max_ratio = {1: 0., 2: 0., 3: 0., 4: 0., 5: 0., 6: 0., 7: 0., 8: 0.}
+    min_ratio = {1: 999., 2: 999., 3: 999., 4: 999., 5: 999., 6: 999., 7: 999., 8: 999.}
 
 
     for batch in tqdm(dataloader):
@@ -141,6 +144,10 @@ def analyze_something(dataloader, cfg):
             if pixel_width > largest_bb["widest"]:
                 largest_bb["widest"] = pixel_width
                 largest_bb["widest_label"] = label
+            
+            temp_pixel_ratio = pixel_height/pixel_width
+            if temp_pixel_ratio > max_ratio[label]: max_ratio[label] = temp_pixel_ratio
+            if temp_pixel_ratio < min_ratio[label]: min_ratio[label] = temp_pixel_ratio
 
     unique, counts = np.unique(all_labels, return_counts=True)
     # dict containing number of lables for each lable
@@ -169,6 +176,10 @@ def analyze_something(dataloader, cfg):
     print_dict(avg_bb_sizes)
     print("\nPIXEL AVERAGE BOUNDING BOX SIZE (w, h, ratio)")
     print_dict(pixel_avg_bb_sizes)
+    print(f"\nMax ratios")
+    print_dict(max_ratio)
+    print(f"\nMin ratios")
+    print_dict(min_ratio)
     print(f'\nWIDEST BB: {largest_bb["widest"]:.2f}\t label {largest_bb["widest_label"]}')
     print(f'HIGHEST BB: {largest_bb["highest"]:.2f}\t label {largest_bb["highest_label"]}')
 
