@@ -103,6 +103,19 @@ def plot_bb_sizes(bb_sizes):
     ax.set_ylim(bottom=0)
     plt.show()
 
+
+def plot_ratios(ratios):
+    int_labels_in_dataset = np.array(list(ratios.keys())).astype(int)
+    text_labels = get_text_labels(int_labels_in_dataset)
+
+    fig, ax = plt.subplots()
+    ax.boxplot(ratios.values())
+
+    ax.set_xticklabels(text_labels)
+    ax.set_ylim(bottom=0)
+    plt.show()
+    
+
 def analyze_something(dataloader, cfg):
     img_width = 1024
     img_height = 128
@@ -116,7 +129,8 @@ def analyze_something(dataloader, cfg):
     pixel_avg_bb_sizes = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
     # Largest bounding boxes
     largest_bb = {'widest':0, 'widest_label':0, 'highest':0, 'highest_label':0}
-    # Largest and smalles bb ratio
+    # analyze bb ratios
+    all_ratios = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: []}
     max_ratio = {1: 0., 2: 0., 3: 0., 4: 0., 5: 0., 6: 0., 7: 0., 8: 0.}
     min_ratio = {1: 999., 2: 999., 3: 999., 4: 999., 5: 999., 6: 999., 7: 999., 8: 999.}
 
@@ -146,6 +160,7 @@ def analyze_something(dataloader, cfg):
                 largest_bb["widest_label"] = label
             
             temp_pixel_ratio = pixel_height/pixel_width
+            all_ratios[label].append(temp_pixel_ratio)
             if temp_pixel_ratio > max_ratio[label]: max_ratio[label] = temp_pixel_ratio
             if temp_pixel_ratio < min_ratio[label]: min_ratio[label] = temp_pixel_ratio
 
@@ -184,7 +199,8 @@ def analyze_something(dataloader, cfg):
     print(f'HIGHEST BB: {largest_bb["highest"]:.2f}\t label {largest_bb["highest_label"]}')
 
     # plot_num_labels(num_labels)
-    plot_bb_sizes(pixel_bb_sizes)
+    # plot_bb_sizes(pixel_bb_sizes)
+    plot_ratios(all_ratios)
     exit()
     
 
