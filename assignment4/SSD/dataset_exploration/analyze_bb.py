@@ -74,7 +74,7 @@ def setBoxColors(bp):
     plt.setp(bp['medians'][1], color='C1')
 
 
-def plot_bb_sizes(bb_sizes):
+def plot_bb_sizes(bb_sizes, y_lim=(0, 425)):
     # bb_sizes = {1:[(w1, h1), (w2 ,h2), ...], 2:...}
     # Want sizes = {1:[(w1, w2, ...), (h1, h2, ...)], 2:...}
     int_labels_in_dataset = np.array(list(bb_sizes.keys())).astype(int)
@@ -104,6 +104,11 @@ def plot_bb_sizes(bb_sizes):
     # plt.boxplot(sizes[8], positions = [22, 23], widths = 0.6)
 
     plt.axhline(y=128, linestyle='dashed', color='C2')
+    plt.axhline(y=32, linestyle='dotted', color='C3')
+    plt.axhline(y=16, linestyle='dotted', color='C3')
+    plt.axhline(y=8, linestyle='dotted', color='C3')
+    plt.axhline(y=4, linestyle='dotted', color='C3')
+    plt.axhline(y=0, linestyle='solid', color='black')
 
     hB, = plt.plot([1,1],'C0')
     hR, = plt.plot([1,1],'C1')
@@ -114,7 +119,7 @@ def plot_bb_sizes(bb_sizes):
     text_labels.pop(3)
     ax.set_xticklabels(text_labels)
     ax.set_xticks([1.5, 4.5, 7.5, 10.5, 13.5, 16.5, 19.5])
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(y_lim)
     plt.show()
 
 
@@ -221,9 +226,10 @@ def analyze_something(dataloader, cfg):
     print(f'\nWIDEST BB: {largest_bb["widest"]:.2f}\t label {largest_bb["widest_label"]}')
     print(f'HIGHEST BB: {largest_bb["highest"]:.2f}\t label {largest_bb["highest_label"]}')
 
-    # plot_num_labels(num_labels)
+    plot_num_labels(num_labels)
     # plot_bb_sizes(pixel_bb_sizes)
-    plot_ratios(all_ratios)
+    # plot_bb_sizes(pixel_bb_sizes, y_lim=(0,20))
+    # plot_ratios(all_ratios)
     exit()
     
 
@@ -231,7 +237,7 @@ def analyze_something(dataloader, cfg):
 def main():
     config_path = "configs/tdt4265.py"
     cfg = get_config(config_path)
-    dataset_to_analyze = "train"  # or "val"
+    dataset_to_analyze = "val"  # "train/val"
 
     print("Label map is:", cfg.label_map)
 
