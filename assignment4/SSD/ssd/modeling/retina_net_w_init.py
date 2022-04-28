@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
+import math
 from .anchor_encoder import AnchorEncoder
 from torchvision.ops import batched_nms
 
 
-class RetinaNet(nn.Module):
+class RetNetWInit(nn.Module):
     def __init__(self, 
             feature_extractor: nn.Module,
             anchors,
@@ -110,16 +111,30 @@ class RetinaNet(nn.Module):
             #self.regression_heads.append(nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1))
             #self.classification_heads.append(nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1))
         
-        self.regression_heads = nn.ModuleList(self.regression_heads)
-        self.classification_heads = nn.ModuleList(self.classification_heads)
+        #self.regression_heads = nn.ModuleList(self.regression_heads)
+        #self.classification_heads = nn.ModuleList(self.classification_heads)
         self.anchor_encoder = AnchorEncoder(anchors)
-        self._init_weights()
+        self._init_improved_weights()
     
     def _init_weights(self):
-        layers = [*self.regression_heads, *self.classification_heads]
+        layers = [*self.regression_head, *self.classification_head]
         for layer in layers:
             for param in layer.parameters():
                 if param.dim() > 1: nn.init.xavier_uniform_(param)
+    
+    def _init_improved_weights(self):
+        layers = [*self.regression_head, *self.classification_head]
+        for layer in layers:
+            for param in layer.parameters():
+                if param.dim() > 1: nn.init.xavier_uniform_(param)
+            if isinstance(layer, nn.Conv2d):
+                nn.init.constant_(layer.bias, 0)
+                nn.init.normal_(layer.weight, mean=0, std=0.01) # Gaussian weight fill with σ = 0.01
+            #for param in layer.parameters():
+            #    if param.dim() > 1: nn.init.xavier_uniform_(param)
+        if isinstance(self.classification_head[-1], nn.Conv2d):
+            nn.init.constant_(self.classification_head[-1].bias[:6], math.log(0.99*(8/0.01)))
+            print(self.classification_head[-1].bias)
    
     def regress_boxes(self, features):
         locations = []
