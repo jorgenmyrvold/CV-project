@@ -21,9 +21,9 @@ from .task2_3_w_init import (
     data_train,
     data_val,
     anchors,
-    # train_cpu_transform,
-    # val_cpu_transform,
-    # gpu_transform,
+    train_cpu_transform,
+    val_cpu_transform,
+    gpu_transform,
     label_map
 )
 
@@ -34,47 +34,8 @@ optimizer = L(torch.optim.AdamW)(
     amsgrad=True
 )
 
-data_train.dataset['img_folder'] = get_dataset_dir("tdt4265_2022_updated"),
-data_train.dataset['annotation_file'] = get_dataset_dir("tdt4265_2022_updated/train_annotations.json"),
-data_val.dataset['img_folder'] = get_dataset_dir("tdt4265_2022_updated"),
-data_val.dataset['annotation_file'] = get_dataset_dir("tdt4265_2022_updated/val_annotations.json"),
+data_train.dataset.img_folder = get_dataset_dir("tdt4265_2022_updated")
+data_train.dataset.annotation_file = get_dataset_dir("tdt4265_2022_updated/train_annotations.json")
+data_val.dataset.img_folder = get_dataset_dir("tdt4265_2022_updated")
+data_val.dataset.annotation_file = get_dataset_dir("tdt4265_2022_updated/val_annotations.json")
 
-
-
-
-# data_train = dict(
-#     dataset=L(TDT4265Dataset)(
-#     img_folder=get_dataset_dir("tdt4265_2022_updated"),
-#     train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
-#         L(RandomSampleCrop)(),
-#         L(ToTensor)(),
-#         L(Resize)(imshape="${train.imshape}"),
-#         L(RandomHorizontalFlip)(),
-#         L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),
-#     ]),
-#     annotation_file=get_dataset_dir("tdt4265_2022_updated/train_annotations.json")),
-#     dataloader=L(torch.utils.data.DataLoader)(
-#         dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=True, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate,
-#         drop_last=True
-#     ),
-#     # GPU transforms can heavily speedup data augmentations.
-#     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
-#         L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])  # Normalize has to be applied after ToTensor (GPU transform is always after CPU)
-#     ])
-# )
-# data_val = dict(
-#     dataset=L(TDT4265Dataset)(
-#         img_folder=get_dataset_dir("tdt4265_2022_updated"),
-#         transform=L(torchvision.transforms.Compose)(transforms=[
-#             L(ToTensor)(),
-#             L(Resize)(imshape="${train.imshape}"),
-#         ]),
-#         annotation_file=get_dataset_dir("tdt4265_2022_updated/val_annotations.json")
-#     ),
-#     dataloader=L(torch.utils.data.DataLoader)(
-#         dataset="${..dataset}", num_workers=4, pin_memory=True, shuffle=False, batch_size="${...train.batch_size}", collate_fn=utils.batch_collate_val
-#     ),
-#     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
-#         L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])
-#     ])
-# )
