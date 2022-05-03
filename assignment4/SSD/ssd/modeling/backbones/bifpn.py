@@ -80,7 +80,7 @@ class BiFPN(torch.nn.Module):
         self.W_bifpn = 64
 
         #self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
-        self.p7_td_conv  = nn.Conv2d(P7_channels, self.W_bifpn, kernel_size=3, stride=2, bias=True, padding=1)
+        self.p7_td_conv  = nn.Conv2d(P7_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p7_td_conv_2  = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p7_td_act   = nn.ReLU()
         self.p7_td_conv_bn = nn.BatchNorm2d(self.W_bifpn)
@@ -88,21 +88,21 @@ class BiFPN(torch.nn.Module):
         self.p7_td_w2    = torch.tensor(1, dtype=torch.float, requires_grad=True)
 
         #self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
-        self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=4, bias=True, padding=1)
+        self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p6_td_conv_2  = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p6_td_act   = nn.ReLU()
         self.p6_td_conv_bn = nn.BatchNorm2d(self.W_bifpn)
         self.p6_td_w1    = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p6_td_w2    = torch.tensor(1, dtype=torch.float, requires_grad=True)
 
-        self.p5_td_conv  = nn.Conv2d(P5_channels,self.W_bifpn, kernel_size=3, stride=8, bias=True, padding=1)
+        self.p5_td_conv  = nn.Conv2d(P5_channels,self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p5_td_conv_2  = nn.Conv2d(self.W_bifpn,self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p5_td_act   = nn.ReLU()
         self.p5_td_conv_bn = nn.BatchNorm2d(self.W_bifpn)
         self.p5_td_w1    = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p5_td_w2    = torch.tensor(1, dtype=torch.float, requires_grad=True)
 
-        self.p4_td_conv  = nn.Conv2d(P4_channels, self.W_bifpn, kernel_size=3, stride=8, bias=True, padding=1)
+        self.p4_td_conv  = nn.Conv2d(P4_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p4_td_conv_2  = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p4_td_act   = nn.ReLU()
         self.p4_td_conv_bn = nn.BatchNorm2d(self.W_bifpn)
@@ -111,7 +111,7 @@ class BiFPN(torch.nn.Module):
         self.p5_upsample   = nn.Upsample(scale_factor=2, mode='nearest')
 
 
-        self.p3_out_conv = nn.Conv2d(P3_channels, self.W_bifpn, kernel_size=3, stride=8, bias=True, padding=1)
+        self.p3_out_conv = nn.Conv2d(P3_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p3_out_conv_2 = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p3_out_act   = nn.ReLU()
         self.p3_out_conv_bn = nn.BatchNorm2d(self.W_bifpn)
