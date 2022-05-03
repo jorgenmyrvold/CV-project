@@ -97,7 +97,7 @@ class FPN(torch.nn.Module):
         
         #fpn = torchvision.ops.FeaturePyramidNetwork(self.out_channels, 64)
         
-        #First layers of ResNet34 
+        #First layers of ResNet50 
         x = self.conv(x)
         x = self.bn1(x)
         x = self.relu(x)
