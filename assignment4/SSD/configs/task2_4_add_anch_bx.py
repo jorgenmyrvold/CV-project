@@ -34,7 +34,7 @@ anchors = L(AnchorBoxes)(
 )
 
 backbone = L(FPN_mod)(
-    input_channels=[256, 512, 1024, 2048, 256, 256, 64],
+    input_channels=[256, 512, 1024, 2048, 256, 128, 64],
     output_channels=[256, 256, 256, 256, 256, 256, 256],
     #output_channels=[128, 256, 128, 512, 64, 64],
     image_channels="${train.image_channels}",
