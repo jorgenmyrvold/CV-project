@@ -26,7 +26,7 @@ class FPN(torch.nn.Module):
         self.in_channels = input_channels
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
-        self.fpn = torchvision.ops.FeaturePyramidNetwork([256, 512, 1024, 2048, 256, 64], 256)
+        self.fpn = torchvision.ops.FeaturePyramidNetwork([256, 512, 1024, 2048, 256, 64], 256)        
         model = tvm.resnet50(pretrained=True)
         modules = list(model.children())[:-2]
         backbone = nn.Sequential(*modules)
