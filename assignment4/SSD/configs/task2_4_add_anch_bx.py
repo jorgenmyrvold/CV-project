@@ -22,7 +22,8 @@ from .task2_3_w_init import (
     label_map
 )
 
-# NEW
+train.batch_size=24
+
 anchors = L(AnchorBoxes)(
     feature_sizes= [[64, 512], [32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]],
     strides= [[2, 2], [4, 4], [8, 8], [16, 16], [32, 32], [64, 64], [128, 128]],
