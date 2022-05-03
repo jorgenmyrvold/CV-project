@@ -226,7 +226,7 @@ def analyze_something(dataloader, cfg):
     print(f'\nWIDEST BB: {largest_bb["widest"]:.2f}\t label {largest_bb["widest_label"]}')
     print(f'HIGHEST BB: {largest_bb["highest"]:.2f}\t label {largest_bb["highest_label"]}')
 
-    # plot_num_labels(num_labels)
+    plot_num_labels(num_labels)
     plot_bb_sizes(pixel_bb_sizes)
     plot_bb_sizes(pixel_bb_sizes, y_lim=(0,128))
     # plot_ratios(all_ratios)
@@ -235,7 +235,7 @@ def analyze_something(dataloader, cfg):
 
 
 def main():
-    config_path = "configs/tdt4265.py"
+    config_path = "configs/tdt4265_updated.py"
     cfg = get_config(config_path)
     dataset_to_analyze = "train"  # "train/val"
 
