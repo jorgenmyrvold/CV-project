@@ -1,8 +1,6 @@
 import torch
 from torch import nn
 from typing import Tuple, List
-from collections import OrderedDict
-import torchvision
 import torchvision.models as tvm
 
 
@@ -26,7 +24,6 @@ class BiFPN(torch.nn.Module):
         self.in_channels = input_channels
         self.out_channels = output_channels
         self.output_feature_shape = output_feature_sizes
-        #self.fpn = torchvision.ops.FeaturePyramidNetwork([256, 512, 1024, 2048, 256, 64], 256)
         model = tvm.resnet50(pretrained=True)
         modules = list(model.children())[:-2]
         backbone = nn.Sequential(*modules)
@@ -77,9 +74,8 @@ class BiFPN(torch.nn.Module):
         self.feature_extractor = [self.conv1, self.conv2, self.conv3, self.conv4, self.conv5, self.conv6]
 
         P3_channels, P4_channels, P5_channels, P6_channels, P7_channels, P8_channels = input_channels
-        self.W_bifpn = 64
+        self.W_bifpn = 128
 
-        #self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p7_td_conv  = nn.Conv2d(P7_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p7_td_conv_2  = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p7_td_act   = nn.ReLU()
@@ -87,7 +83,6 @@ class BiFPN(torch.nn.Module):
         self.p7_td_w1    = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p7_td_w2    = torch.tensor(1, dtype=torch.float, requires_grad=True)
 
-        #self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p6_td_conv  = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p6_td_conv_2  = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
         self.p6_td_act   = nn.ReLU()
@@ -144,7 +139,7 @@ class BiFPN(torch.nn.Module):
         self.p6_out_w1   = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p6_out_w2   = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p6_out_w3   = torch.tensor(1, dtype=torch.float, requires_grad=True)
-        #self.p4_downsample= nn.MaxPool2d(kernel_size=2)
+        self.p5_downsample= nn.MaxPool2d(kernel_size=2)
 
         #self.p6_out_conv = nn.Conv2d(P6_channels, self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
         self.p7_out_conv = nn.Conv2d(self.W_bifpn, self.W_bifpn, kernel_size=3, stride=1, groups=self.W_bifpn, bias=True, padding=1)
@@ -153,7 +148,7 @@ class BiFPN(torch.nn.Module):
         self.p7_out_w1   = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p7_out_w2   = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p7_out_w3   = torch.tensor(1, dtype=torch.float, requires_grad=True)
-        #self.p4_downsample= nn.MaxPool2d(kernel_size=2)
+        self.p6_downsample= nn.MaxPool2d(kernel_size=2)
 
 
         self.p8_out_conv = nn.Conv2d(P8_channels,self.W_bifpn, kernel_size=3, stride=1, bias=True, padding=1)
@@ -162,6 +157,7 @@ class BiFPN(torch.nn.Module):
         self.p8_out_conv_bn = nn.BatchNorm2d(self.W_bifpn)
         self.p8_out_w1   = torch.tensor(1, dtype=torch.float, requires_grad=True)
         self.p8_out_w2   = torch.tensor(1, dtype=torch.float, requires_grad=True)
+        self.p7_downsample= nn.MaxPool2d(kernel_size=2)
 
         
 
@@ -178,7 +174,7 @@ class BiFPN(torch.nn.Module):
         where out_features[0] should have the shape:
             shape(-1, output_channels[0], 38, 38),
         """
-        print("x: ", x.shape)
+        #print("x: ", x.shape)
         out_features = []
         #out_features = nn.ModuleList
         out_features_keys = ["c1","c2","c3","c4","c5","c6"]
@@ -215,45 +211,53 @@ class BiFPN(torch.nn.Module):
         #output_fpn = self.fpn(output_dict)
         #out_features = output_fpn.values()
         #print(output_fpn)
-        print("Out 0: ", out_features[0].shape)
-        print("Out 1: ", out_features[1].shape)
-        print("Out 2: ", out_features[2].shape)
-        print("Out 3: ", out_features[3].shape)
-        print("Out 4: ", out_features[4].shape)
-        print("Out 5: ", out_features[5].shape)
+        # print("Out 0: ", out_features[0].shape)
+        # print("Out 1: ", out_features[1].shape)
+        # print("Out 2: ", out_features[2].shape)
+        # print("Out 3: ", out_features[3].shape)
+        # print("Out 4: ", out_features[4].shape)
+        # print("Out 5: ", out_features[5].shape)
         epsilon = 0.0001
         P3, P4, P5, P6, P7, P8 = out_features
         #P8, P7, P6, P5, P4, P3 = out_features
 
         P8_td  = self.p8_out_conv(P8)
-        print("P8_td: ", P8_td.shape)
+        #print("P8_td: ", P8_td.shape)
+        upsamp = nn.Upsample(scale_factor=2, mode='nearest')
+        #P8_td = upsamp(P8_td)
+        #print("P8_td_upsamp: ", P8_td.shape)
 
+        # P7_td_inp = self.p7_td_conv(P7)
+        # P7_td = self.p7_td_conv_2((self.p7_td_w1 * P7_td_inp + self.p7_td_w2 * P8_td) /
+        #                          (self.p7_td_w1 + self.p7_td_w2 + epsilon))
         P7_td_inp = self.p7_td_conv(P7)
-        print("self.p7_td_w1: ", (self.p7_td_w1).shape)
-        print("P7_td_inp: ", P7_td_inp.shape)
-        print("p7_td_w2: ", self.p7_td_w2.shape)
-        P7_td = self.p7_td_conv_2((self.p7_td_w1 * P7_td_inp + self.p7_td_w2 * P8_td) /
+        P7_td = self.p7_td_conv_2((self.p7_td_w1 * P7_td_inp + self.p7_td_w2 * upsamp(P8_td)) /
                                  (self.p7_td_w1 + self.p7_td_w2 + epsilon))
-        print("hei 2")
+        #print("hei 2")
         #P7_td = self.p7_td_conv_2(P7_td_inp)
         P7_td = self.p7_td_act(P7_td)
         P7_td = self.p7_td_conv_bn(P7_td)
+        #P7_td = upsamp(P7_td)
 
         P6_td_inp = self.p6_td_conv(P6)
-        P6_td = self.p6_td_conv_2((self.p6_td_w1 * P6_td_inp + self.p6_td_w2 * P7_td) /
+        # P6_td = self.p6_td_conv_2((self.p6_td_w1 * P6_td_inp + self.p6_td_w2 * P7_td) /
+        #                          (self.p6_td_w1 + self.p6_td_w2 + epsilon))
+        P6_td = self.p6_td_conv_2((self.p6_td_w1 * P6_td_inp + self.p6_td_w2 * upsamp(P7_td)) /
                                  (self.p6_td_w1 + self.p6_td_w2 + epsilon))
         #P6_td = self.p6_td_conv_2(P6_td_inp)
         P6_td = self.p6_td_act(P6_td)
         P6_td = self.p6_td_conv_bn(P6_td)
-
+        #P6_td = upsamp(P6_td)
          
         P5_td_inp = self.p5_td_conv(P5)
         #print (P5_td_inp.shape, P6_td.shape)
-        P5_td = self.p5_td_conv_2((self.p5_td_w1 * P5_td_inp + self.p5_td_w2 * P6_td) /
+        # P5_td = self.p5_td_conv_2((self.p5_td_w1 * P5_td_inp + self.p5_td_w2 * P6_td) /
+        #                          (self.p5_td_w1 + self.p5_td_w2 + epsilon))
+        P5_td = self.p5_td_conv_2((self.p5_td_w1 * P5_td_inp + self.p5_td_w2 * upsamp(P6_td)) /
                                  (self.p5_td_w1 + self.p5_td_w2 + epsilon))
         P5_td = self.p5_td_act(P5_td)
         P5_td = self.p5_td_conv_bn(P5_td)
-
+        #P5_td = upsamp(P5_td)
         #print (P4.shape, P5_td.shape)
         P4_td_inp = self.p4_td_conv(P4)
         P4_td = self.p4_td_conv_2((self.p4_td_w1 * P4_td_inp + self.p4_td_w2 * self.p5_upsample(P5_td)) /
@@ -268,32 +272,33 @@ class BiFPN(torch.nn.Module):
         P3_out = self.p3_out_act(P3_out)
         P3_out = self.p3_out_conv_bn(P3_out)
 
-        #print (P4_td.shape, P3_out.shape)
+        #print ("SHAPS43: ", P4_td.shape, P3_out.shape)
 
         P4_out = self.p4_out_conv((self.p4_out_w1 * P4_td_inp  + self.p4_out_w2 * P4_td + self.p4_out_w3 * self.p3_downsample(P3_out) )
                                     / (self.p4_out_w1 + self.p4_out_w2 + self.p4_out_w3 + epsilon))
         P4_out = self.p4_out_act(P4_out)
         P4_out = self.p4_out_conv_bn(P4_out)
 
-        
+        #print ("SHAPS54: ", P5_td.shape, P4_out.shape)
         P5_out = self.p5_out_conv(( self.p5_out_w1 * P5_td_inp + self.p5_out_w2 * P5_td + self.p5_out_w3 * self.p4_downsample(P4_out) )
                                     / (self.p5_out_w2 + self.p5_out_w3 + epsilon))
         P5_out = self.p5_out_act(P5_out)
         P5_out = self.p5_out_conv_bn(P5_out)
 
-        
-        P6_out = self.p6_out_conv((self.p6_out_w1 * P6_td_inp + self.p6_out_w2 * P6_td + self.p6_out_w3 * (P5_out) )
+        #print ("SHAPS65: ", P6_td.shape, P6_td_inp.shape, P5_out.shape, self.p5_downsample(P5_out).shape)
+        P6_out = self.p6_out_conv((self.p6_out_w1 * P6_td_inp + self.p6_out_w2 * P6_td + self.p6_out_w3 * self.p5_downsample(P5_out) )
                                     / (self.p6_out_w1 + self.p6_out_w2 + self.p6_out_w3 + epsilon))
         P6_out = self.p6_out_act(P6_out)
         P6_out = self.p6_out_conv_bn(P6_out)
 
-        P7_out = self.p7_out_conv((self.p7_out_w1 * P7_td_inp + self.p7_out_w2 * P7_td + self.p7_out_w3 * (P6_out) )
+        #print ("SHAPS76: ", P7_td.shape, P7_td_inp.shape, P6_out.shape)
+        P7_out = self.p7_out_conv((self.p7_out_w1 * P7_td_inp + self.p7_out_w2 * P7_td + self.p7_out_w3 * self.p6_downsample(P6_out) )
                                     / (self.p7_out_w1 + self.p7_out_w2 + self.p7_out_w3 + epsilon))
         P7_out = self.p7_out_act(P7_out)
         P7_out = self.p7_out_conv_bn(P7_out)
 
 
-        P8_out = self.p8_out_conv_2((self.p8_out_w1 * P8_td + self.p8_out_w2 * P7_out) /
+        P8_out = self.p8_out_conv_2((self.p8_out_w1 * P8_td + self.p8_out_w2 * self.p7_downsample(P7_out)) /
                                  (self.p8_out_w1 + self.p8_out_w2 + epsilon))
         P8_out = self.p8_out_act(P8_out)
         P8_out = self.p8_out_conv_bn(P8_out)
@@ -301,15 +306,14 @@ class BiFPN(torch.nn.Module):
 
         out_features = [P3_out, P4_out, P5_out, P6_out, P7_out, P8_out]
         
+        # for feature in out_features:
+        #     print("feature size: ", feature.shape)
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
-            expected_shape = (self.out_channels[idx], h, w)
-            #expected_shape = (out_channel, h, w)
+            expected_shape = (out_channel, h, w)
             assert feature.shape[1:] == expected_shape, \
                 f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
         assert len(out_features) == len(self.output_feature_shape),\
             f"Expected that the length of the outputted features to be: {len(self.output_feature_shape)}, but it was: {len(out_features)}"
         return tuple(out_features)
-
-        

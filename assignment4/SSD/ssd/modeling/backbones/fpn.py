@@ -133,6 +133,8 @@ class FPN(torch.nn.Module):
             out_features.append(layer(x))
             x = out_features[-1]
         '''
+        # for feature in out_features:
+        #     print("feature size: ", feature.shape)
         for idx, feature in enumerate(out_features):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
