@@ -22,7 +22,7 @@ from .task2_3_w_init import (
     label_map
 )
 
-train.batch_size=16
+# train.batch_size=16
 
 anchors = L(AnchorBoxes)(
     feature_sizes= [[64, 512], [32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]],
