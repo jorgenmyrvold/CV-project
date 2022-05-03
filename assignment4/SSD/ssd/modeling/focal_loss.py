@@ -76,6 +76,7 @@ class FocalLoss(nn.Module):
         focal = weight * one_hot_target * log_p_k
         alphas = self.alpha.repeat(confs.shape[2], 1).T
         focal = -alphas.repeat(confs.shape[0],1,1) * focal
+        
         focal_loss=torch.sum(focal)
 
         pos_mask = (gt_labels > 0).unsqueeze(1).repeat(1, 4, 1)
