@@ -38,8 +38,8 @@ anchors = L(AnchorBoxes)(
 
 backbone = L(BiFPN)(
     input_channels=[256, 512, 1024, 2048, 256, 256],
-    #output_channels=[64, 64, 64, 64, 64, 64],
-    output_channels=[128, 128, 128, 128, 128, 128],
+    output_channels=[64, 64, 64, 64, 64, 64],
+    #output_channels=[128, 128, 128, 128, 128, 128],
     #output_channels=[256, 256, 256, 256, 256, 256],
     #output_channels=[128, 256, 128, 512, 64, 64],
     image_channels="${train.image_channels}",
