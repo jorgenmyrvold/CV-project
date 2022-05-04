@@ -2,7 +2,7 @@
 from tops.config import LazyCall as L
 import torchvision
 import torch
-from ssd.modeling import SSD300
+from ssd.modeling import SSD300, AnchorBoxes
 from ssd.modeling.backbones import BiFPN
 from .task2_2_hFlip_Crop import (
     train,
