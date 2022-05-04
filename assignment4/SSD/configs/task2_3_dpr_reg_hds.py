@@ -15,13 +15,14 @@ from .task2_3_focal_loss import (
     backbone,
     data_train,
     data_val,
-    #anchors,
+    anchors,
     train_cpu_transform,
     val_cpu_transform,
     gpu_transform,
     label_map
 )
 
+'''
 anchors = L(AnchorBoxes)(
     feature_sizes= [[32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]],
     # Strides is the number of pixels (in image space) between each spatial position in the feature map
@@ -36,7 +37,7 @@ anchors = L(AnchorBoxes)(
     scale_center_variance=0.1,
     scale_size_variance=0.2
 )
-
+'''
 model = L(RetinaNet)(
     feature_extractor = "${backbone}",
     anchors = "${anchors}",
