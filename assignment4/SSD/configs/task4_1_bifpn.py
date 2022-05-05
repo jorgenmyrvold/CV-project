@@ -1,18 +1,17 @@
 
 from tops.config import LazyCall as L
-from ssd.modeling.retina_net import RetinaNet
-from ssd.modeling import AnchorBoxes
 import torchvision
 import torch
-
-from .task2_3_focal_loss import (
+from ssd.modeling import SSD300, AnchorBoxes
+from ssd.modeling.backbones import BiFPN
+from .task2_2_hFlip_Crop import (
     train,
     optimizer,
-    anchors,
+    #anchors,
     schedulers,
     loss_objective,
     #model,
-    backbone,
+    #backbone,
     data_train,
     data_val,
     anchors,
@@ -21,7 +20,6 @@ from .task2_3_focal_loss import (
     gpu_transform,
     label_map
 )
-
 
 anchors = L(AnchorBoxes)(
     feature_sizes= [[32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]],
@@ -38,10 +36,20 @@ anchors = L(AnchorBoxes)(
     scale_size_variance=0.2
 )
 
-model = L(RetinaNet)(
-    feature_extractor = "${backbone}",
-    anchors = "${anchors}",
-    loss_objective = "${loss_objective}",
-    num_classes = 8 + 1, # add one for background
-    anchor_prob_initialization = False
-)
+backbone = L(BiFPN)(
+    input_channels=[256, 512, 1024, 2048, 256, 256],
+    output_channels=[64, 64, 64, 64, 64, 64],
+    #output_channels=[128, 128, 128, 128, 128, 128],
+    #output_channels=[256, 256, 256, 256, 256, 256],
+    #output_channels=[128, 256, 128, 512, 64, 64],
+    image_channels="${train.image_channels}",
+    output_feature_sizes="${anchors.feature_sizes}")
+
+model = L(SSD300)(
+    feature_extractor="${backbone}",
+    anchors="${anchors}",
+    loss_objective="${loss_objective}",
+    num_classes=8 + 1  # Add 1 for background
+)   
+
+

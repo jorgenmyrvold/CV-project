@@ -116,17 +116,12 @@ class RetNetWInit(nn.Module):
         self.anchor_encoder = AnchorEncoder(anchors)
         self._init_improved_weights()
     
-    def _init_weights(self):
-        layers = [*self.regression_head, *self.classification_head]
-        for layer in layers:
-            for param in layer.parameters():
-                if param.dim() > 1: nn.init.xavier_uniform_(param)
     
     def _init_improved_weights(self):
         layers = [*self.regression_head, *self.classification_head]
         for layer in layers:
-            for param in layer.parameters():
-                if param.dim() > 1: nn.init.xavier_uniform_(param)
+            # for param in layer.parameters():
+            #     if param.dim() > 1: nn.init.xavier_uniform_(param)
             if isinstance(layer, nn.Conv2d):
                 nn.init.constant_(layer.bias, 0)
                 nn.init.normal_(layer.weight, mean=0, std=0.01) # Gaussian weight fill with σ = 0.01
