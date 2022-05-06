@@ -1,14 +1,7 @@
 
 from tops.config import LazyCall as L
-from ssd.modeling.retina_net_w_init import RetNetWInit
-from ssd.modeling.backbones import FPN
-import torchvision
 import torch
 from .utils import get_dataset_dir
-from ssd.data.transforms import (ToTensor, Normalize, Resize,GroundTruthBoxesToAnchors, RandomHorizontalFlip, RandomSampleCrop)
-from ssd.data import TDT4265Dataset
-from ssd import utils
-
 
 from .task2_3_w_init import (
     train,

@@ -19,6 +19,7 @@ from .task2_3_focal_loss import (
     label_map
 )
 
+
 data_train.dataset.img_folder = get_dataset_dir("tdt4265_2022_updated")
 data_train.dataset.annotation_file = get_dataset_dir("tdt4265_2022_updated/train_annotations.json")
 data_val.dataset.img_folder = get_dataset_dir("tdt4265_2022_updated")
