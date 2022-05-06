@@ -52,3 +52,13 @@ def run_demo(config_path: str, score_threshold: float, video_path: str, output_p
         
 if __name__ == '__main__':
     run_demo()
+
+
+# Run by python -m performance_assessment.demo_video configs/tdt4265.py input_path output_path
+# python -m performance_assessment.demo_video configs/tdt4265.py video/video_input/Video00003_combined.avi video/video_output/[cfg_file]/Video03.avi
+# python -m performance_assessment.demo_video configs/tdt4265.py video/video_input/Video00010_combined.avi video/video_output/[cfg_file]/Video10.avi
+# python -m performance_assessment.demo_video configs/tdt4265.py video/video_input/Video00016_combined.avi video/video_output/[cfg_file]/Video16.avi
+
+# python -m performance_assessment.demo_video configs/task2_4_all_data.py video/video_input/Video00003_combined.avi video/video_output/task2_4_all_data/Video03.avi
+# python -m performance_assessment.demo_video configs/task2_4_all_data.py video/video_input/Video00010_combined.avi video/video_output/task2_4_all_data/Video10.avi
+# python -m performance_assessment.demo_video configs/task2_4_all_data.py video/video_input/Video00016_combined.avi video/video_output/task2_4_all_data/Video16.avi
