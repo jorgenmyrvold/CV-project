@@ -102,14 +102,6 @@ class RetinaNet(nn.Module):
 
         # Initialize output heads that are applied to each feature map from the backbone.
         
-        for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
-            print("outch: ", out_ch)
-            print("nboxes: ", n_boxes)
-            #self.regression_heads.append(conv_regression_heads)
-            #self.classification_heads.append(conv_class_heads)
-            #self.regression_heads.append(nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1))
-            #self.classification_heads.append(nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1))
-        
         self.regression_heads = nn.ModuleList(self.regression_heads)
         self.classification_heads = nn.ModuleList(self.classification_heads)
         self.anchor_encoder = AnchorEncoder(anchors)

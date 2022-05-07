@@ -1,8 +1,6 @@
 
 from tops.config import LazyCall as L
-import torchvision
-import torch
-from ssd.modeling import SSD300, SSDMultiboxLoss, backbones, AnchorBoxes
+from ssd.modeling import SSD300
 from ssd.modeling.backbones import FPN
 from .task2_2_hFlip_Crop import (
     train,
@@ -24,7 +22,6 @@ from .task2_2_hFlip_Crop import (
 backbone = L(FPN)(
     input_channels=[256, 512, 1024, 2048, 256, 64], 
     output_channels=[256, 256, 256, 256, 256, 256], 
-    #output_channels=[128, 256, 128, 512, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}")
 

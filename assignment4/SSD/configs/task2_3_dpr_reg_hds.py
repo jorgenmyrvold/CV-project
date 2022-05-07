@@ -2,8 +2,6 @@
 from tops.config import LazyCall as L
 from ssd.modeling.retina_net import RetinaNet
 from ssd.modeling import AnchorBoxes
-import torchvision
-import torch
 
 from .task2_3_focal_loss import (
     train,

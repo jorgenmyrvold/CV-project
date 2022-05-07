@@ -1,7 +1,6 @@
 from tops.config import LazyCall as L
 from ssd.modeling import AnchorBoxes
 from ssd.modeling.retina_net_w_init import RetNetWInit
-from ssd.modeling.backbones import FPN
 from ssd.modeling.backbones import FPN_mod
 
 # from .task2_4 import (
@@ -22,8 +21,6 @@ from .task2_3_w_init import (
     label_map
 )
 
-# train.batch_size=16
-
 anchors = L(AnchorBoxes)(
     feature_sizes= [[64, 512], [32, 256], [16, 128], [8, 64], [4, 32], [2, 16], [1, 8]],
     strides= [[2, 2], [4, 4], [8, 8], [16, 16], [32, 32], [64, 64], [128, 128]],
@@ -37,7 +34,6 @@ anchors = L(AnchorBoxes)(
 backbone = L(FPN_mod)(
     input_channels=[256, 512, 1024, 2048, 256, 128, 64],
     output_channels=[256, 256, 256, 256, 256, 256, 256],
-    #output_channels=[128, 256, 128, 512, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )

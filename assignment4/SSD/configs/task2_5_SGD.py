@@ -1,4 +1,3 @@
-from tops.config import LazyCall as L
 from .utils import get_dataset_dir
 
 from .task2_3_w_init import (

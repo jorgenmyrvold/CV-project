@@ -1,7 +1,5 @@
 
 from tops.config import LazyCall as L
-import torchvision
-import torch
 from ssd.modeling import SSD300, AnchorBoxes
 from ssd.modeling.backbones import BiFPN
 from .task2_2_hFlip_Crop import (
@@ -39,9 +37,6 @@ anchors = L(AnchorBoxes)(
 backbone = L(BiFPN)(
     input_channels=[256, 512, 1024, 2048, 256, 256],
     output_channels=[64, 64, 64, 64, 64, 64],
-    #output_channels=[128, 128, 128, 128, 128, 128],
-    #output_channels=[256, 256, 256, 256, 256, 256],
-    #output_channels=[128, 256, 128, 512, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}")
 

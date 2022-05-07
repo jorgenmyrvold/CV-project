@@ -1,8 +1,5 @@
 
 from tops.config import LazyCall as L
-from ssd.modeling.retina_net_w_init import RetNetWInit
-from ssd.modeling.backbones import FPN
-import torchvision
 import torch
 
 

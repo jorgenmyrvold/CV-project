@@ -1,9 +1,6 @@
 
 from tops.config import LazyCall as L
 from ssd.modeling import FocalLoss
-import torchvision
-import torch
-
 from .task2_3_fpn import (
     train,
     optimizer,

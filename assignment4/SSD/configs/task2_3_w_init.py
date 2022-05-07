@@ -1,10 +1,6 @@
 
 from tops.config import LazyCall as L
 from ssd.modeling.retina_net_w_init import RetNetWInit
-from ssd.modeling import AnchorBoxes
-import torchvision
-import torch
-
 from .task2_3_dpr_reg_hds import (
     train,
     optimizer,
